@@ -1,10 +1,13 @@
 import Head from 'next/head'
 import { Inter } from 'next/font/google'
 import Header from '../../components/Header'
+import Banner from '../../components/Banner'
+import requests from '../../utils/requests'
 
 const inter = Inter({ subsets: ['latin'] })
 
-export default function Home() {
+export default function Home({netflixOriginals}) {
+  console.log(netflixOriginals)
   return (
     <div className='relative h-screen bg-gradient-to-b from-gray-900/10 to-[#010511] lg:h-[140vh]'>
       <Head>
@@ -16,7 +19,7 @@ export default function Home() {
 
       <Header/>
       <main>
-          {/*Banner*/}
+          <Banner/>
           <section>
             {/* Row */}
           </section>
@@ -25,4 +28,44 @@ export default function Home() {
       {/* Modal */}
     </div>
   )
+}
+
+
+//Server side rendering
+export const getServerSideProps = async () => {
+ 
+  //Resolve all the fetch requests wit Promise All 
+  const [
+    netflixOriginals,
+    trendingNow,
+    topRated,
+    actionMovies,
+    comedyMovies,
+    horrorMovies,
+    romanceMovies,
+    documentaries,
+  ] = await Promise.all([
+    fetch(requests.fetchNetflixOriginals).then((res) => res.json()),
+    fetch(requests.fetchTrending).then((res) => res.json()),
+    fetch(requests.fetchTopRated).then((res) => res.json()),
+    fetch(requests.fetchActionMovies).then((res) => res.json()),
+    fetch(requests.fetchComedyMovies).then((res) => res.json()),
+    fetch(requests.fetchHorrorMovies).then((res) => res.json()),
+    fetch(requests.fetchRomanceMovies).then((res) => res.json()),
+    fetch(requests.fetchDocumentaries).then((res) => res.json()),
+  ])
+
+  return{
+    props: {
+      netflixOriginals: netflixOriginals.results, //Get the results of the fetch and send them to the props.
+      trendingNow: trendingNow.results,
+      topRated: topRated.results,
+      actionMovies: actionMovies.results,
+      comedyMovies: comedyMovies.results,
+      horrorMovies: horrorMovies.results,
+      romanceMovies: romanceMovies.results,
+      documentaries: documentaries.results,
+      
+    }
+  }
 }
