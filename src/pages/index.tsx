@@ -9,7 +9,8 @@ import { useRecoilValue } from 'recoil'
 import { modalState } from '../../atoms/modalAtom'
 import Modal from '../../components/Modal'
 import Plans from '../../components/Plans'
-
+import payments from '../../lib/stripe'
+import { Product, getProducts } from '@stripe/firestore-stripe-payments/lib/product'
 
 interface Props {
   netflixOriginals: Movie[]
@@ -20,6 +21,7 @@ interface Props {
   horrorMovies: Movie[]
   romanceMovies: Movie[]
   documentaries: Movie[]
+  products: Product[]
 }
 
 export default function Home({
@@ -30,7 +32,8 @@ export default function Home({
   comedyMovies,
   horrorMovies,
   romanceMovies,
-  documentaries
+  documentaries,
+  products
 }: Props) {
 
   const { loading } = useAuth();
@@ -41,7 +44,7 @@ export default function Home({
 
   if(loading || subscription === null) return null;
 
-  if(!subscription) return <Plans/>
+  if(!subscription) return <Plans products={products}/>
 
   return (
     <div  className={`relative h-screen bg-gradient-to-b from-gray-900/10 to-[#010511] lg:h-[140vh] ${
@@ -77,7 +80,11 @@ export default function Home({
 
 //Server side rendering
 export const getServerSideProps = async () => {
- 
+  const products = await getProducts(payments, {
+    includePrices: true,
+    activeOnly: true
+  }).then((res) => res)
+  .catch((error) => console.log(error.message))
   //Resolve all the fetch requests wit Promise All 
   const [
     netflixOriginals,
@@ -100,6 +107,7 @@ export const getServerSideProps = async () => {
   ])
 
   return{
+    
     props: {
       netflixOriginals: netflixOriginals.results, //Get the results of the fetch and send them to the props.
       trendingNow: trendingNow.results,
@@ -109,7 +117,7 @@ export const getServerSideProps = async () => {
       horrorMovies: horrorMovies.results,
       romanceMovies: romanceMovies.results,
       documentaries: documentaries.results,
-      
+      products,
     }
   }
 }
